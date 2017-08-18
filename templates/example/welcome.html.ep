@@ -1,0 +1,51 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.5/vue.js"></script>
+<div id="chat">
+  Username: <input v-model="username"><br>
+  Send: <chat-entry @message="send"></chat-entry><br>
+  <div id="log">
+    <chat-msg v-for="m in messages" :username="m.username" :message="m.message"></chat-msg>
+  </div>
+  <button v-on:click="close">Close</button>
+</div>
+<script>
+Vue.component('chat-entry', {
+  template: '<input @keydown.enter="message" v-model="current">',
+  data: function() { return { current: '' } },
+  methods: {
+    message: function() {
+      this.$emit('message', this.current);
+      this.current = '';
+    },
+  },
+});
+Vue.component('chat-msg', {
+  template: '<p>{{username}}: {{message}}</p>',
+  props: {
+    username: { type: String, required: true },
+    message:  { type: String, default: '' },
+  },
+});
+var vm = new Vue({
+  el: '#chat',
+  data: { messages: [], username: '', ws: null },
+  methods: {
+    connect: function() {
+      var self = this;
+      self.ws = new WebSocket('<%= url_for('socket')->to_abs %>');
+      self.ws.onmessage = function (e) { self.messages.push(JSON.parse(e.data)) };
+    },
+    send: function(message) {
+      var data = {username: this.username, message: message};
+      fetch('/send', {
+          method: "POST",
+          body: JSON.stringify(data),
+      });
+    },
+    close: function() {
+      var self = this;
+      self.ws.close();
+    },
+  },
+  created: function() { this.connect() },
+});
+</script>
