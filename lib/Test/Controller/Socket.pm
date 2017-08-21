@@ -5,7 +5,7 @@ use Mojo::JSON;
 
 sub start {
   my $c = shift;
-  #$c->inactivity_timeout(3600);
+  $c->inactivity_timeout(3600);
 
   my $connection = $c->tx->connection;
 
